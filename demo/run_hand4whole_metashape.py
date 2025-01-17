@@ -87,15 +87,18 @@ predictor = DefaultPredictor(detectron_cfg)
 
 # prepare input image
 transform = transforms.ToTensor()
-save_path = osp.join(dataset_path, 'smplx_init')
+save_path = osp.join(dataset_path, 'canon_camera/smplx_init')
 os.makedirs(save_path, exist_ok=True)
-img_path_list = glob(osp.join(dataset_path, 'person', 'ldr_undistorted', '*.png')) + glob(osp.join(dataset_path, 'person', 'ldr_undistorted', '*.jpg'))
+img_path_list = glob(osp.join(dataset_path, 'canon_camera/person/ldr', '*.png')) + glob(osp.join(dataset_path, 'canon_camera/person/ldr', '*.jpg'))
 img_path_list = sorted(img_path_list)
 img_height, img_width = cv2.imread(img_path_list[0]).shape[:2]
 video_width = 1920
 video_height = int(video_width / img_width * img_height)
-video_save = cv2.VideoWriter(osp.join(dataset_path, 'smplx_init.mp4'),
-                             cv2.VideoWriter_fourcc(*'mp4v'), 30, (video_width*2, video_height))
+video_save = cv2.VideoWriter(osp.join(dataset_path,
+                                      'canon_camera/smplx_init.mp4'),
+                             cv2.VideoWriter_fourcc(*'mp4v'),
+                             30,
+                             (video_width * 2, video_height))
 frame_idx_list = sorted([int(x.split('/')[-1][:-4]) for x in img_path_list])
 bbox = None
 for image_path in tqdm(img_path_list):
@@ -130,13 +133,11 @@ for image_path in tqdm(img_path_list):
     focal = [cfg.focal[0] / cfg.input_body_shape[1] * bbox[2], cfg.focal[1] / cfg.input_body_shape[0] * bbox[3]]
     princpt = [cfg.princpt[0] / cfg.input_body_shape[1] * bbox[2] + bbox[0], cfg.princpt[1] / cfg.input_body_shape[0] * bbox[3] + bbox[1]]
     rendered_img = render_mesh(vis_img, mesh, smpl_x.face, {'focal': focal, 'princpt': princpt})
-    frame = np.concatenate((vis_img, rendered_img),1)
-    frame = cv2.putText(frame, frame_idx, (int(img_width*0.1), int(img_height*0.1)), cv2.FONT_HERSHEY_PLAIN, 2.0, (0,0,255), 3)
     # resize to video size
     vis_img = cv2.resize(vis_img, (video_width, video_height))
     rendered_img = cv2.resize(rendered_img, (video_width, video_height))
     frame = np.concatenate((vis_img, rendered_img),1)
-    frame = cv2.putText(frame, frame_idx, (int(video_width*0.1), int(video_height*0.1)), cv2.FONT_HERSHEY_PLAIN, 2.0, (0,0,255), 3)
+    frame = cv2.putText(frame, frame_idx, (int(img_width*0.1), int(img_height*0.1)), cv2.FONT_HERSHEY_PLAIN, 2.0, (0,0,255), 3)
     video_save.write(frame.astype(np.uint8))
 
     # save SMPL-X parameters
